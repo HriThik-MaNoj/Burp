@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# =====================================================
+#        ██╗  ██╗██████╗ ██╗███████╗██╗  ██╗
+#        ██║  ██║██╔══██╗██║██╔════╝██║ ██╔╝
+#        ███████║██████╔╝██║█████╗  █████╔╝ 
+#        ██╔══██║██╔═══╝ ██║██╔══╝  ██╔═██╗ 
+#        ██║  ██║██║     ██║███████╗██║  ██╗
+#        ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝
+#            🔥 Hri7h!k Launcher 🔥
+# =====================================================
+
+# 🧰 Install Dependencies (Java, figlet, lolcat)
+install_dependencies() {
+    echo "🔧 Checking & Installing Dependencies..."
+
+    if ! command -v java &> /dev/null; then
+        echo "⏳ Java not found. Installing OpenJDK..."
+        sudo apt update
+        sudo apt install -y default-jdk
+    else
+        echo "✔ Java is already installed."
+    fi
+
+    if ! command -v figlet &> /dev/null; then
+        echo "⏳ Installing figlet..."
+        sudo apt install -y figlet
+    fi
+
+    if ! command -v lolcat &> /dev/null; then
+        echo "⏳ Installing lolcat..."
+        sudo apt install -y lolcat
+    fi
+
+    echo "✅ All dependencies installed."
+    echo ""
+}
+
+# 🎨 Show Banner
+show_banner() {
+    clear
+    figlet "Hri7h!k Launcher" | lolcat
+    echo ""
+}
+
+# 📁 Prompt for JAR File
+prompt_for_path() {
+    local prompt_message=$1
+    local default_file=$2
+    read -p "$prompt_message [Press Enter to use './$default_file']: " input_path
+    if [[ -z "$input_path" ]]; then
+        input_path="./$default_file"
+    fi
+    if [[ ! -f "$input_path" ]]; then
+        echo "❌ Error: File '$input_path' not found!"
+        exit 1
+    fi
+    echo "$(realpath "$input_path")"
+}
+
+# ✅ Main Execution
+install_dependencies
+show_banner
+
+JAVA_BIN=$(command -v java)
+echo "✔ Java found at: $JAVA_BIN"
+echo ""
+
+AGENT_JAR=$(prompt_for_path "Enter location for the Loader JAR file" "loader.jar")
+TARGET_JAR=$(prompt_for_path "Enter location for the BurpSuite JAR file" "burpsuite_pro.jar")
+echo ""
+
+# 🚀 Run Java with Agent
+echo "🚀 Launching BurpSuite with Loader agent..."
+"$JAVA_BIN" \
+    --add-opens=java.desktop/javax.swing=ALL-UNNAMED \
+    --add-opens=java.base/java.lang=ALL-UNNAMED \
+    --add-opens=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED \
+    --add-opens=java.base/jdk.internal.org.objectweb.asm.tree=ALL-UNNAMED \
+    --add-opens=java.base/jdk.internal.org.objectweb.asm.Opcodes=ALL-UNNAMED \
+    -javaagent:"$AGENT_JAR" \
+    -noverify \
+    -jar "$TARGET_JAR"
