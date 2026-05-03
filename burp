@@ -62,22 +62,37 @@ prompt_for_path() {
 install_dependencies
 show_banner
 
-JAVA_BIN=$(command -v java)
+SDKMAN_JAVA="$HOME/.sdkman/candidates/java/current/bin/java"
+SYS_JAVA="/usr/lib/jvm/java-21-openjdk-amd64/bin/java"
+
+if [[ -f "$SDKMAN_JAVA" ]]; then
+    JAVA_BIN="$SDKMAN_JAVA"
+elif [[ -f "$SYS_JAVA" ]]; then
+    JAVA_BIN="$SYS_JAVA"
+else
+    echo "❌ Java 21+ not found. Install via: sdk install java 21.0.7-tem"
+    exit 1
+fi
 echo "✔ Java found at: $JAVA_BIN"
 echo ""
 
 AGENT_JAR=$(prompt_for_path "Enter location for the Loader JAR file" "loader.jar")
-TARGET_JAR=$(prompt_for_path "Enter location for the BurpSuite JAR file" "burpsuite_pro.jar")
 echo ""
 
 # 🚀 Run Java with Agent
 echo "🚀 Launching BurpSuite with Loader agent..."
+export _JAVA_AWT_WM_NONREPARENTING=1
+wmname LG3D 2>/dev/null
 "$JAVA_BIN" \
     --add-opens=java.desktop/javax.swing=ALL-UNNAMED \
     --add-opens=java.base/java.lang=ALL-UNNAMED \
     --add-opens=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED \
     --add-opens=java.base/jdk.internal.org.objectweb.asm.tree=ALL-UNNAMED \
     --add-opens=java.base/jdk.internal.org.objectweb.asm.Opcodes=ALL-UNNAMED \
+    -Dsun.java2d.opengl=false \
+    -Dsun.java2d.xrender=false \
+    -Dsun.java2d.pmoffscreen=false \
+    -Dawt.useSystemAAFontSettings=on \
+    -XX:+EnableDynamicAgentLoading \
     -javaagent:"$AGENT_JAR" \
-    -noverify \
-    -jar "$TARGET_JAR"
+    -jar "$AGENT_JAR"
